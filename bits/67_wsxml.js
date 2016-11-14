@@ -293,7 +293,7 @@ return function parse_ws_xml_data(sdata, s, opts, guess) {
 }; })();
 
 function write_ws_xml_data(ws, opts, idx, wb) {
-	var o = [], r = [], range = safe_decode_range(ws['!ref']), cell, ref, rr = "", cols = [], R, C;
+	var o = [], r = [], range = safe_decode_range(ws['!ref']), cell, ref, rr = "", cols = [], R, C, props;
 	for(C = range.s.c; C <= range.e.c; ++C) cols[C] = encode_col(C);
 	for(R = range.s.r; R <= range.e.r; ++R) {
 		r = [];
@@ -303,7 +303,17 @@ function write_ws_xml_data(ws, opts, idx, wb) {
 			if(ws[ref] === undefined) continue;
 			if((cell = write_ws_xml_cell(ws[ref], ref, ws, opts, idx, wb)) != null) r.push(cell);
 		}
-		if(r.length > 0) o[o.length] = (writextag('row', r.join(""), {r:rr}));
+        // todo
+		if(r.length > 0) {
+		    var p = {r:rr};
+		    if(typeof ws['!rows'] !== 'undefined' && ws['!rows'].length > 0) {
+		        props = ws['!rows'][R];
+                for(var prop in props) {
+                    p[prop] = props[prop];
+                }
+			}
+			o[o.length] = (writextag('row', r.join(""), p));
+		}
 	}
 	return o.join("");
 }
