@@ -165,6 +165,7 @@ function write_wb_xml(wb, opts) {
         }))
       }
     }
+    }
     o[o.length] = '</definedNames>';
   }
 

@@ -63,6 +63,20 @@ function parse_ws_xml(data, opts, rels) {
 	return s;
 }
 
+function write_ws_xml_sheetpr(sheetpr) {
+	if(sheetpr.length == 0) return "";
+	var o = '<sheetPr>';
+	for(var i in sheetpr) {
+    for(var j in sheetpr[i]){
+      o += '<' + j;
+      for(var k in sheetpr[i][j])
+        o += ' ' + k + '="' + sheetpr[i][j][k] + '"';
+      o += '/>'
+    }
+  }
+	return o + '</sheetPr>';
+}
+
 function write_ws_xml_merges(merges) {
 	if(merges.length == 0) return "";
 	var o = '<mergeCells count="' + merges.length + '">';
@@ -137,7 +151,7 @@ function write_ws_xml_cols(ws, cols) {
 }
 
 function write_ws_xml_cell(cell, ref, ws, opts, idx, wb) {
-	if(cell.v === undefined && cell.s === undefined) return "";
+	if(cell.v === undefined && cell.s === undefined && (!cell.f)) return "";
 	var vv = "";
 	var oldt = cell.t, oldv = cell.v;
 	switch(cell.t) {
@@ -154,7 +168,7 @@ function write_ws_xml_cell(cell, ref, ws, opts, idx, wb) {
 			break;
 		default: vv = cell.v; break;
 	}
-	var v = writetag('v', escapexml(vv)), o = {r:ref};
+	var v = (cell.f ? writetag('f', escapexml(cell.f)) : writetag('v', escapexml(vv))), o = {r:ref};
 	/* TODO: cell style */
 	var os = get_cell_style(opts.cellXfs, cell, opts);
 	if(os !== 0) o.s = os;
@@ -305,10 +319,13 @@ function write_ws_xml(idx, opts, wb) {
 	var s = wb.SheetNames[idx], sidx = 0, rdata = "";
 	var ws = wb.Sheets[s];
 	if(ws === undefined) ws = {};
+	if(ws['!sheetPr'] !== undefined && ws['!sheetPr'].length > 0) o[o.length] = (write_ws_xml_sheetpr(ws['!sheetPr']));
 	var ref = ws['!ref']; if(ref === undefined) ref = 'A1';
 	o[o.length] = (writextag('dimension', null, {'ref': ref}));
 
-  var sheetView = writextag('sheetView', null,  {
+	var sheetViewPane = ws['!viewPane'] !== undefined ? write_ws_xml_view_pane(ws['!viewPane']) : null;
+
+  var sheetView = writextag('sheetView', sheetViewPane, {
     showGridLines: opts.showGridLines == false ? '0' : '1',
     tabSelected: opts.tabSelected === undefined ? '0' :  opts.tabSelected,  // see issue #26, need to set WorkbookViews if this is set
     workbookViewId: opts.workbookViewId === undefined ? '0' : opts.workbookViewId
@@ -352,4 +369,24 @@ function write_ws_xml_col_breaks(breaks) {
     brk.push(writextag('brk', null, {id: thisBreak, max: nextBreak, man: '1'}))
   }
   return writextag('colBreaks', brk.join(' '), {count: brk.length, manualBreakCount: brk.length})
+}
+
+function write_ws_xml_view_pane(pane) {
+	var p = {
+		state: pane.state === 'split' || pane.state === 'frozen' || pane.state === 'frozenSplit' ? pane.state : 'split',
+		xSplit: pane.xSplit || 0,
+		ySplit: pane.ySplit || 0
+	};
+
+	// If frozen pane, defaults to the cell in first unfrozen column and first unfrozen row
+	if (p.state !== 'split') {
+		p.topLeftCell = pane.topLeftCell || encode_cell({c: p.xSplit, r: p.ySplit});
+	}
+	else if (pane.topLeftCell !== undefined) {
+		p.topLeftCell = pane.topLeftCell;
+	}
+
+	if (pane.activePane !== undefined) p.activePane = pane.activePane;
+
+	return writextag('pane', null, p);
 }
