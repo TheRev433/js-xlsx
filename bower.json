@@ -1,6 +1,6 @@
 {
   "name": "js-xlsx-2",
-  "homepage": "https://github.com/TheRev433/js-xlsx#feature/pane-element",
+  "homepage": "https://github.com/SheetJS/js-xlsx",
   "main": "dist/xlsx.js",
   "version": "0.8.11",
   "ignore": [
