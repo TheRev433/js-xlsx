@@ -4,7 +4,7 @@
 /*jshint funcscope:true, eqnull:true */
 var XLSX = {};
 (function make_xlsx(XLSX){
-XLSX.version = '0.8.11';
+XLSX.version = '0.8.16';
 var current_codepage = 1200, current_cptable;
 if(typeof module !== "undefined" && typeof require !== 'undefined') {
 	if(typeof cptable === 'undefined') cptable = require('./dist/cpexcel');
@@ -7784,6 +7784,7 @@ return function parse_ws_xml_data(sdata, s, opts, guess) {
           if(isNaN(p.v)) p.v = "" // we don't want NaN if p.v is null
           break;
 				case 's':
+					if (!p.hasOwnProperty('v')) continue;
 					sstr = strs[parseInt(p.v, 10)];
 					p.v = sstr.t;
 					p.r = sstr.r;
@@ -7858,7 +7859,7 @@ function write_ws_xml(idx, opts, wb) {
 
   var sheetView = writextag('sheetView', sheetViewPane, {
     showGridLines: opts.showGridLines == false ? '0' : '1',
-    tabSelected: opts.tabSelected === undefined ? '0' :  opts.tabSelected,
+    tabSelected: opts.tabSelected === undefined ? '0' :  opts.tabSelected,  // see issue #26, need to set WorkbookViews if this is set
     workbookViewId: opts.workbookViewId === undefined ? '0' : opts.workbookViewId
   });
   o[o.length] = writextag('sheetViews', sheetView);
@@ -8625,6 +8626,7 @@ function write_wb_xml(wb, opts) {
           "name":"_xlnm.Print_Titles",
           localSheetId : ''+i
         }))
+      }
     }
     }
     o[o.length] = '</definedNames>';

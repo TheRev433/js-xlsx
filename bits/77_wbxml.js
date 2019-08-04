@@ -163,6 +163,7 @@ function write_wb_xml(wb, opts) {
           "name":"_xlnm.Print_Titles",
           localSheetId : ''+i
         }))
+      }
     }
     }
     o[o.length] = '</definedNames>';
